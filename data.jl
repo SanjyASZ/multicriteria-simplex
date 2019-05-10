@@ -8,12 +8,21 @@ __precompile__()
 #--------------------------------------------------------------------------------
 
 #exemple Mathias
+# MM=[0,0,0]
+# objectiv=[ [-1.0, -2.0, 0.0] , [ -1.0,0.0,2.0], [ 1.0,0.0,-1.0] ]
+# C= Arr_to_Mat(objectiv)
+# #matrice contraintes
+# A=[ 1.0 1.0 0.0 ; 0.0 1.0 0.0; 1.0 -1.0 1.0]
+# equ_const=[1,1,1]
+# #membre de droite
+# b=[1.0,2.0,4.0]
+
+#exemple Mathias TEST
 MM=[0,0,0]
-objectiv=[ [-1.0, -2.0, 0.0] , [ -1.0,0.0,2.0], [ 1.0,0.0,-1.0] ]
-C= Arr_to_Mat(objectiv)
+C=[ -1.0 -2.0 0.0 ;  -1.0 0.0 2.0  ; 1.0  0.0 -1.0 ]
 #matrice contraintes
-constraint=[ 1.0 1.0 0.0 ; 0.0 1.0 0.0; 1.0 -1.0 1.0]
-equ_const=[1,1,1]
+A=[ 1.0 1.0 0.0 ; 0.0 1.0 0.0; 1.0 -1.0 1.0]
+equ_const=[3,3,3]
 #membre de droite
 b=[1.0,2.0,4.0]
 

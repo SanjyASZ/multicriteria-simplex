@@ -20,10 +20,8 @@ include("phase1.jl")
 include("phase2.jl")
 include("phase3.jl")
 
-nbctr = size(constraint)[1]
-nbvar = size(constraint)[2]
-nbobj = length(objectiv)
 
+#PHASE 3 Arthur à optimiser il faudrait enlever les globals ----------------------------------------------------
 function completion(eq)
 	global nbneq = nbctr - length(findall(!isodd,eq))
 	I = zeros(Int,nbctr,nbneq)
@@ -37,43 +35,30 @@ function completion(eq)
     i=1
 	return I,zeros(Int,nbobj,nbneq)
 end
+	global nbvar = size(A,2) # nb de variables
+	global nbctr = size(A,1) # nb de contraintes
+	global nbobj = size(C,1) # nb d' objectifs
+#---------------------------------------------------------------------------------
 
-#constraint=verif_combi_lin(constraint,equ_const,b)
+
 #PHASE 1 --------------------------------------------------
-res= phase1(objectiv,constraint,b,equ_const,solverSelected)
+A,b=verif_combi_lin(A,equ_const,b)
+res= phase1(C,A,b,equ_const,solverSelected)
 println("\n \n")
 x0=res[2]
 
 #PHASE 2 -------------------------------------------------
-res2=phase2(objectiv,constraint,b,x0,solverSelected,equ_const)
+A,equ_cont,b,C,M = formalise(A,C,MM,equ_const,b)
+res2=phase2(C,A,b,x0,solverSelected,equ_const)
 LABASE=enBase(res2)
 println(LABASE)
 
 #PHASE 3 ------------------------------------------------------
-	println("-P3-")
-	II,OO = completion(equ_const)
-	A3 = hcat(A,II)
-	C3 = hcat(C,OO)
-	L,Lx = @time p3(C3,A3,b,LABASE)
+println("-P3-")
+II,OO = completion(equ_const)
+A3 = hcat(A,II)
+C3 = hcat(C,OO)
+L,Lx = @time p3(C3,A3,b,LABASE)
 
-	println("")
-	if test
-		#Ls,Lxs = @time p3test(C,A,b,B1)
-		Ls,Lxs = @time p3sorted(C,A,b,B1)
-
-		println("")
-		println("")
-
-		same = true
-		for i in 1:length(Ls)
-			same = same && isin(L,Ls[i])
-		end
-		for i in 1:length(L)
-			same = same && isin(Ls,L[i])
-		end
-		println(" sames : ",same)
-		println("Bases test : ",Ls)
-		println("Sol associées : ",Lxs,"\n")
-	end
-	println("Bases : ",L)
-	println("Sol associées : ",Lx)
+println("Bases : ",L)
+println("Sol associées : ",Lx)

@@ -38,7 +38,7 @@ function setLP1(Cout::Array{Float64,1},A::Matrix,b::Array{Float64,1},solverSelec
 end
 
 #PHASE 1 à donner sous forme standard
-function phase1(objectiv::Array{Array{Float64,1},1}, constraint::Array{Float64,2}, b::Array{Float64,1}, equ_const::Array{Int64},solverSelected)
+function phase1(objectiv::Array{Float64,2}, constraint::Array{Float64,2}, b::Array{Float64,1}, equ_const::Array{Int64},solverSelected)
     #verification des combinaisons linéaire
 
     #nombre de contraintes

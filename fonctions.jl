@@ -13,52 +13,70 @@ using LinearAlgebra
 #fonction qui verifie l'existence de combinaison linéaire
 function verif_combi_lin(A::Matrix,equ_const::Array{Int64},b::Array{Float64})
     #initialisation matrice resultat
-    res=Array{Array{Float64,1},1}(undef,0)
+    res_A=Array{Array{Float64,1},1}(undef,0)
     #indice des contraintes d'égalité possiblement redondantes (vide au début)
     ind=Array{Int64}(undef,0)
     egal=false
     #boucle pour rajout ligne contr égal == (parcous equ_const indique contr ==)
     for i in 1:length(equ_const)
-        #si == 3 alors on a une contrainte d'égalité
+        #si equ_const[i]== 3 alors on a une contrainte d'égalité
         if equ_const[i]==3
             #creation ligne coef A + membre b
             ligne=push!(A[i,:],b[i])
             #rajoute ligne dans res
-            push!(res,ligne)
+            push!(res_A,ligne)
             #rajout le num contr d'= concernée
             push!(ind,i)
             #il existe une contr =
             egal=true
-
-            #suppr dans A et equ_const
-            A = A[1:size(A,1) .!= i,: ]
-            deleteat!(equ_const,i)
         end
     end
+        #suppr dans A et equ_const et b
+        cpt=0
+        for i in ind
+            A = A[1:size(res_A,1) .!= i-cpt,: ]
+            cpt=cpt+1
+        end
+        deleteat!(equ_const,ind)
+        deleteat!(b,ind)
+
     #s'il existe contr d'égalité
     if egal
         #transfo du res en matrix
-        res=Arr_to_Mat(res)
+        res_A=Arr_to_Mat(res_A)
+        #ordonne sur la famille génératrice
+        res_A=ordonne(res_A)
         #calcul du rang de res
-        res=ordonne(res)
-        rang = rank(res)
+        rang = rank(res_A)
     else
         #pas de contraintes d'égalité rang nul
         rang = 0
     end
 
     #si la diff>0 alors il existe contr combinaison linéaire
-    for i in 1:size(res)[1] - rang
-        #suppr contrainte redondante (supprime les i dernières lignes)
-        res = res[1:size(res,1) .!= size(res,1),: ]
+    for i in 1:size(res_A)[1] - rang
+        #suppr contrainte redondante (supprime la dernière ligne)
+        res_A = res_A[1:size(res,1) .!= size(res,1),: ]
+    end
+
+    if rang !=0
+    #la dernière colonne correspond au second membre
+        res_b=res_A[:,size(A)[2]]
+        #sppr la dernière colonne dans res_A
+        res_A = res_A[:, 1:size(res,1) .!= size(res,1) ]
+        #rajoute des contraintes non redondantes parmi les contraintes initiales
+        res_A = vcat(A,res_A)
+        #rajoute des seconds membres b
+        res_b = vcat(b,res_b)
+    else
+         res_A = A
+         res_b = b
     end
     #retour de la matrice A sans les contraintes redondantes avec le vecteur b second membre
-
-    ##############################################""
-    #A COMPLETER
-    return A,res
+    return res_A,res_b
 end
 
+#fonction d'échelonnage pas utile dans notre cas mais pourrait servir à d'autres
 function echelonnage(M::Matrix)
     M=float(M)
     i=1;j=1
@@ -76,6 +94,7 @@ function echelonnage(M::Matrix)
     return M
 end
 
+#fonction qui fait un pivot au sens de Gauss pas utilisé non plus
 function pivote(M::Matrix,ligne_p::Int64,col_p::Int64)
     nb_ligne=size(M,1)
     #mets des 0 sauf sur le pivot
@@ -86,6 +105,7 @@ function pivote(M::Matrix,ligne_p::Int64,col_p::Int64)
     return M
 end
 
+#fonction qui ordonne la famille génératrice à récup
 function ordonne(M::Matrix)
     res=Array{Array{Float64,1},1}(undef,0)
     trouve=false
@@ -114,22 +134,21 @@ function ordonne(M::Matrix)
     return res
 end
 
-
 ##########################################################################################
 
 #fonction objectif avec poids = 1 retourne ::Array{Array{Float64,1},1}
-function make_eT( objectiv::Array{Array{Float64,1},1} )
+function make_eT( objectiv::Array{Float64,2} )
     #nombre de var
-    nb_var=length(objectiv[1])
+    nb_var=size(objectiv)[2]
     #nombre de fonctions objectiv
-    nb_obj=length(objectiv)
+    nb_obj=size(objectiv)[1]
     #result
     res=zeros(nb_var)
 
     #calcul somme des fonctions objectiv
     for j in 1:nb_var
         for i in 1:nb_obj
-            res[j]=res[j]+objectiv[i][j]
+            res[j]=res[j]+objectiv[i,j]
         end
     end
     return res
@@ -160,26 +179,26 @@ end
 
 
 
-
-## fonctions utiles à la phase 2 recherche 1ere base efficiente
+## fonctions pré-traitement utiles à la phase 2
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 
-function normalise(constraint::Array{Float64,2},objectiv::Array{Array{Float64,1},1},MinMax::Array{Int64},equ_const::Array{Int64})
-    constraint=canonise(constraint,equ_const,b)
+function formalise(constraint::Array{Float64,2},objectiv::Array{Float64,2},MinMax::Array{Int64},equ_const::Array{Int64}, b::Array{Float64,1})
+    constraint,equ_const,b = inferiorise(constraint,equ_const,b)
     res=convertObj(objectiv,MinMax)
+    #par soucis de clarté
     MinMax=res[2]
     objectiv=res[1]
-    return objectiv,constraint,MinMax
+    #retourne la forme final du problème en minimisation et inférieure ou égale
+    return constraint,equ_const,b,objectiv,MinMax
 end
 
 #fonction qui convertit les maximisation en minimisation retourne Array{Array{Float64,1},1}
-function convertObj(objectiv::Array{Array{Float64,1},1},MinMax::Array{Int64})
+function convertObj(objectiv::Array{Float64,2},MinMax::Array{Int64})
     for i in 1:length(MinMax)
         if MinMax[i] == 1
-            println("- - ", -objectiv[i])
-            objectiv[i] = -objectiv[i]
-            println("- - ", -objectiv[i])
+            println("- - ", -objectiv[i,:])
+            objectiv[i,:] = -objectiv[i,:]
             MinMax[i]=0
         end
     end
@@ -187,59 +206,61 @@ function convertObj(objectiv::Array{Array{Float64,1},1},MinMax::Array{Int64})
 end
 
 #fonction d'attribution de poids aux objectifs retourne ::Array{Array{Float64,1},1}
-function scalair(objectiv::Array{Array{Float64,1},1},w::Array{Float64} )
+function scalair(objectiv::Array{Float64,2},w::Array{Float64} )
     #nombre de var
-    nb_var=length(objectiv[1])
+    nb_var=size(objectiv)[2]
     #nombre de fonctions objectiv
-    nb_obj=length(objectiv)
+    nb_obj=size(objectiv)[1]
     #result
     res=zeros(nb_var)
-
     #calcul somme des fonctions objectiv
     for j in 1:nb_var
         for i in 1:nb_obj
-            res[j]=res[j]+ w[i]*objectiv[i][j]
+            res[j]=res[j]+ w[i]*objectiv[i,j]
         end
     end
-
     return res
 end
 
-#fonction qui change les égalités en inégalités pour construire le dual
-function canonise( constraint::Matrix, equ_const::Array{Int64,1} , b::Array{Int64,1}  )
+# dans equ_const "3 signifie = | 2 signifie >= et 1 signifie <="
+
+#fonction qui change les supérieure en inégalités inférieures
+function inferiorise( constraint::Array{Float64,2} , equ_const::Array{Int64,1} , b::Array{Float64,1}  )
+    #parcourt les contraintes
     for i in 1:length(equ_const)
-        if equ_const[i]==3
-            equ_const[i]=1
-            v= constraint[i,:]
-            v=-v
-            constraint = vcat(constraint,v')
-            println(constraint) #LAS
-            push!(equ_const,2)
-        end
+        #si on a une contrainte supérieure ou égale on la transforme en inf
         if equ_const[i]==2
+            #simplement pour respecter la notation dans equ_const
             equ_const=1
+            #multiplie par -1 la contrainte
             constraint[i,:]=-constraint[i,:]
+            #multiplie par -1 second membre
             b[i]=-b[i]
         end
     end
     return constraint,equ_const,b
 end
 
-#construction matrice contr partie gauche A du dual
-function make_A( constraint::Array{Float64,2} )
+#construction matrice contr partie gauche A
+function make_A( constraint::Array{Float64,2},equ_const )
     #creation matrice Identité
     Id = Matrix{Float64}(I,size(constraint,1),size(constraint,1))
+    #attention au var d'écart des égalités sont nulles
+    for i in 1:size(constraint)[1]
+        if equ_const[i]==3
+            Id[i,i]=0
+        end
+    end
     #rajout des var d'écart dans A
     return hcat(constraint,Id)
 end
 
 #construction matrice contr partie droite C du dual
-function make_C( objectiv::Array{Array{Float64,1},1} , nb_contr::Int64 )
+function make_C( objectiv::Array{Float64,2} , nb_contr::Int64 )
     #creation matrice nb_objectiv
-    C = Arr_to_Mat(objectiv)
     println(C) #LAS
     #rajout dans C var_ecart (nb_contr) tout à 0
-    Var_add = zeros(Float64,length(objectiv),nb_contr)
+    Var_add = zeros(size(objectiv)[1],nb_contr)
     return hcat(C,Var_add)
 end
 
