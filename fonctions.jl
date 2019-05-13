@@ -32,10 +32,9 @@ function verif_combi_lin(A::Matrix,equ_const::Array{Int64},b::Array{Float64})
         end
     end
         #suppr dans A et equ_const et b
-        cpt=0
+        sort!(ind, rev=true)
         for i in ind
-            A = A[1:size(res_A,1) .!= i-cpt,: ]
-            cpt=cpt+1
+            A = A[1:size(res_A,1) .!= i,: ]
         end
         deleteat!(equ_const,ind)
         deleteat!(b,ind)
