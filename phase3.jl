@@ -9,13 +9,14 @@ using JuMP
 # il résoud le PL min{ e'v : Ry - r^jd + Iv = 0,y,d,v <= 0 } où R est la matrice des coef des var hors base des fonctions objectifs
 function pj(solverSelected, C::Vector{Float64}, A::Array{Float64,2})
 	m = Model(solver = solverSelected)
+	nb = length(C)
 
-	nb = size(C,1)
+	nb_obj=size(A,1)
 
 	@variable(m,x[1:nb] >= 0)
 
 	@objective(m,Min,sum(x[i]*C[i] for i in 1:nb))
-	@constraint(m,ctr[ictr = 1:nbctr], sum(x[iv]*A[ictr,iv] for iv in 1:nb) <= 0)
+	@constraint(m,ctr[ictr = 1:nb_obj], sum(x[iv]*A[ictr,iv] for iv in 1:nb) <= 0)
 	return m
 end
 
@@ -76,7 +77,7 @@ function p3(C,A,b,B1)
 			# la fonction objectif est la somme des colonnes de R-rj
 			C3 = [sum(A3[:,o]) for o in 1:size(A3,2)]
 
-			m = pj(GLPKSolverLP(),C3,A3)
+			m = pj(ClpSolver(),C3,A3)
 			status = solve(m, suppress_warnings = true)
 
 			if status != :Optimal

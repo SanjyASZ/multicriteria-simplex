@@ -104,7 +104,7 @@ function pivote(M::Matrix,ligne_p::Int64,col_p::Int64)
     return M
 end
 
-#fonction qui ordonne la famille génératrice à récup
+#fonction qui ordonne la famille libre à récup
 function ordonne(M::Matrix)
     res=Array{Array{Float64,1},1}(undef,0)
     trouve=false

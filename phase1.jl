@@ -70,6 +70,11 @@ function phase1(objectiv::Array{Float64,2}, constraint::Array{Float64,2}, b::Arr
     x=getvalue(lp_x)
     z= dot(x,make_eT(objectiv))
     WOW = getrawsolver(lp)
+    WOOW=internalmodel(lp)
+
+    println("getrawsolver \n" , WOW) #LAS
+
+    println("internalmodel \n" , WOOW) #LAS
 
     #affichage
     if (isnan(z))

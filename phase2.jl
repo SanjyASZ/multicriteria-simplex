@@ -12,7 +12,11 @@ function setLP2_1(objectiv::Array{Float64,2},A::Matrix,b::Array{Float64,1},x0::A
     #nbligne(contr) et Col(var)
     nb_var=size(A,2)
     nb_contr=size(A,1)
-    nb_obj=size(objectiv)[2]
+    nb_obj=size(objectiv,1)
+
+    println("nb_var= ",nb_var)#LAS
+    println("nb_contr= ",nb_contr)#LAS
+    println("nb_obj= ",nb_obj)#LAS
 
     #construit matrix A et C
     A=make_A(A,equ_const)
@@ -46,7 +50,10 @@ function setLP2_2(poids::Array{Float64,1},A::Matrix,b::Array{Float64,1},solverSe
     nb_contr=size(A,1)
 
     #définition variable
-    @variable(lp, x[ 1:nb_contr ] >= 0)
+    @variable(lp, x[ 1:nb_var ] >= 0)
+
+    println("poids=", poids) #LAS
+    println("x=", x) #LAS
 
     #définition objectif
     @objective(lp,Min,dot(poids, x))
@@ -89,6 +96,7 @@ function phase2(objectiv::Array{Float64,2}, A::Array{Float64,2}, b::Array{Float6
 
         poids = scalair(objectiv,w)
         lp, x = setLP2_2(poids,A,b,solverSelected,equ_const)
+
         println("\n \n Resolution: Phase 2-2 première solution de base efficiente"); @time solve(lp)
 
         sol_eff = getvalue(x)
@@ -116,7 +124,7 @@ function phase2(objectiv::Array{Float64,2}, A::Array{Float64,2}, b::Array{Float6
             #println("INTERNAL MODEL 2 GLPKK !! \n",internalmodel(lp))
             #GLPK.get_bhead(lp, 2)
             basic_or_not = Base.getindex(lp,x)
-            println("BBBB=", basic_or_not)
+            println("BBBB=", basic_or_not)()
         else
             #println("INTERNAL MODEL 2 !! \n",internalmodel(lp))
             cbasis, rbasis = MathProgBase.getbasis(internalmodel(lp))
