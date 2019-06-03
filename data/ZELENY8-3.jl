@@ -1,5 +1,4 @@
-
-#ex ZELENY8-3 
+#ex ZELENY8-3
 C = [
 -1 -3 1;
 -4 -1 -2;

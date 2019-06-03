@@ -58,8 +58,8 @@ function phase1(objectiv::Array{Float64,2}, constraint::Array{Float64,2}, b::Arr
     lp, lp_x = setLP1(zeroo,A,b,solverSelected,equ_const)
     println("\n \n Resolution: Phase 1... Le MOLP est il faisable?"); @time solve(lp)
 
-    println("\n the LP correspond to : ", lp)
-    println(" x values : ", lp_x)
+    # println("\n the LP correspond to : ", lp)
+    # println(" x values : ", lp_x)
 
     #affichage et résolution du lp
 
@@ -72,9 +72,8 @@ function phase1(objectiv::Array{Float64,2}, constraint::Array{Float64,2}, b::Arr
     WOW = getrawsolver(lp)
     WOOW=internalmodel(lp)
 
-    println("getrawsolver \n" , WOW) #LAS
-
-    println("internalmodel \n" , WOOW) #LAS
+    # println("getrawsolver \n" , WOW) #LAS
+    # println("internalmodel \n" , WOOW) #LAS
 
     #affichage
     if (isnan(z))

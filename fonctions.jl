@@ -12,6 +12,7 @@ using LinearAlgebra
 
 #fonction qui verifie l'existence de combinaison linéaire
 function verif_combi_lin(A::Matrix,equ_const::Array{Int64},b::Array{Float64})
+    println("Verification dépendance linéaire")
     #initialisation matrice resultat
     res_A=Array{Array{Float64,1},1}(undef,0)
     #indice des contraintes d'égalité possiblement redondantes (vide au début)
@@ -31,19 +32,20 @@ function verif_combi_lin(A::Matrix,equ_const::Array{Int64},b::Array{Float64})
             egal=true
         end
     end
+    println("contrainte à l'égalité : \n indice contraintes: ", ind)
         #suppr dans A et equ_const et b
         sort!(ind, rev=true)
         for i in ind
-            A = A[1:size(res_A,1) .!= i,: ]
+            A = A[1:size(A,1) .!= i,: ]
+            deleteat!(equ_const,i)
+            deleteat!(b,i)
         end
-        deleteat!(equ_const,ind)
-        deleteat!(b,ind)
 
     #s'il existe contr d'égalité
     if egal
         #transfo du res en matrix
         res_A=Arr_to_Mat(res_A)
-        #ordonne sur la famille génératrice
+        #ordonne sur la famille libre
         res_A=ordonne(res_A)
         #calcul du rang de res
         rang = rank(res_A)
@@ -51,18 +53,18 @@ function verif_combi_lin(A::Matrix,equ_const::Array{Int64},b::Array{Float64})
         #pas de contraintes d'égalité rang nul
         rang = 0
     end
-
     #si la diff>0 alors il existe contr combinaison linéaire
     for i in 1:size(res_A)[1] - rang
         #suppr contrainte redondante (supprime la dernière ligne)
-        res_A = res_A[1:size(res,1) .!= size(res,1),: ]
+        println("La contrainte redondante avec second membre: ",  res_A[size(res_A,1),: ])
+        res_A = res_A[1:size(res_A,1) .!= size(res_A,1),: ]
     end
 
     if rang !=0
     #la dernière colonne correspond au second membre
-        res_b=res_A[:,size(A)[2]]
+        res_b=res_A[:,size(res_A)[2]]
         #sppr la dernière colonne dans res_A
-        res_A = res_A[:, 1:size(res,1) .!= size(res,1) ]
+        res_A = res_A[:, 1:size(res_A,2) .!= size(res_A,2) ]
         #rajoute des contraintes non redondantes parmi les contraintes initiales
         res_A = vcat(A,res_A)
         #rajoute des seconds membres b

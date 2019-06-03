@@ -14,10 +14,6 @@ function setLP2_1(objectiv::Array{Float64,2},A::Matrix,b::Array{Float64,1},x0::A
     nb_contr=size(A,1)
     nb_obj=size(objectiv,1)
 
-    println("nb_var= ",nb_var)#LAS
-    println("nb_contr= ",nb_contr)#LAS
-    println("nb_obj= ",nb_obj)#LAS
-
     #construit matrix A et C
     A=make_A(A,equ_const)
     C=make_C(objectiv,nb_contr)
@@ -30,12 +26,12 @@ function setLP2_1(objectiv::Array{Float64,2},A::Matrix,b::Array{Float64,1},x0::A
     @objective(lp, Min, dot(u,b) + dot(w,C*x0) )
 
     #définition contraintes
-    @constraint(lp, cte[j=1:nb_var+nb_obj], sum(A[i,j] * u[i] for i=1:nb_contr) + sum(C[i,j] * w[i] for i=1:nb_obj) >= 0 )
+    @constraint(lp, cte[jA=1:size(A,2),jC=1:size(C,2)], sum(A[i,jA] * u[i] for i=1:nb_contr) + sum(C[i,jC] * w[i] for i=1:nb_obj) >= 0 )
+    # @constraint(lp, cte[j=1:nb_var+nb_obj], sum(A[i,j] * u[i] for i=1:nb_contr) + sum(C[i,j] * w[i] for i=1:nb_obj) >= 0 )
     @constraint(lp, cte[i=1:nb_obj], w[i] >= 1 )
 
     #return
     return lp,u,w
-
 end
 
 #Recherche d'une premiere solution efficace
@@ -51,9 +47,6 @@ function setLP2_2(poids::Array{Float64,1},A::Matrix,b::Array{Float64,1},solverSe
 
     #définition variable
     @variable(lp, x[ 1:nb_var ] >= 0)
-
-    println("poids=", poids) #LAS
-    println("x=", x) #LAS
 
     #définition objectif
     @objective(lp,Min,dot(poids, x))
@@ -82,8 +75,8 @@ function phase2(objectiv::Array{Float64,2}, A::Array{Float64,2}, b::Array{Float6
     #solution
     w = getvalue(lp_w)
 
-    println("the LP correspond to : ", lp)
-    println(" u,w  values : ", lp_u,lp_w)
+    # println("the LP correspond to : ", lp)
+    # println(" u,w  values : ", lp_u,lp_w)
 
     #affichage
     if (isnan(w[1]))
@@ -101,8 +94,8 @@ function phase2(objectiv::Array{Float64,2}, A::Array{Float64,2}, b::Array{Float6
 
         sol_eff = getvalue(x)
 
-        println("the LP correspond to : ", lp)
-        println(" u,w  values : ", lp_u,lp_w)
+        # println("the LP correspond to : ", lp)
+        # println(" u,w  values : ", lp_u,lp_w)
 
         #affichage
         if (isnan(sol_eff[1]))

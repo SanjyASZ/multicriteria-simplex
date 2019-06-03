@@ -17,11 +17,20 @@ solverSelected= ClpSolver()
 #GLPK=false
 
 include("fonctions.jl")
-include("data/molp_10_779_10174_entropy.jl")
 include("phase1.jl")
 include("phase2.jl")
 include("phase3.jl")
 include("parser.jl")
+
+# include("degen.jl") #test pour les combinaisons linéaires
+# include("data/molp_10_779_10174_entropy.jl") #trop long énumération base
+# include("data/molp_19_376_1917_entropy.jl") # énumération base
+# include("data/molp_21_31_138_entropy.jl") #pas de solutions efficaces ici
+include("data/EHRGOTT.jl")
+# include("data/TD2-1.jl")
+# include("data/TD2-2.jl")
+# include("data/ZELENY8-3.jl")
+# include("data/ZELENY8-18.jl")
 
 #PHASE 3 Arthur à optimiser il faudrait enlever les globals ----------------------------------------------------
 function completion(eq)
@@ -46,24 +55,30 @@ C=float(C)
 A=float(A)
 b=float(b)
 
-#PHASE 1 --------------------------------------------------
-# A,b=verif_combi_lin(A,eq,b)
-res= phase1(C,A,b,eq,solverSelected)
-println("\n \n")
-x0=res[2]
+if size(C,1)>1
+	#PHASE 1 --------------------------------------------------
+	eq_tmp=copy(eq)
+	A,b=verif_combi_lin(A,eq_tmp,b)
 
-#PHASE 2 -------------------------------------------------
-# A,equ_cont,b,C,M = formalise(A,C,MM,eq,b)
-res2=phase2(C,A,b,x0,solverSelected,eq)
-LABASE=enBase(res2)
-println("LaBase = ",LABASE)
+	res= phase1(C,A,b,eq,solverSelected)
+	println("\n \n")
+	x0=res[2]
 
-#PHASE 3 -------------------------------------------------
-println("-P3-")
-Id,O = completion(eq)
-A3 = hcat(A,Id)
-C3 = hcat(C,O)
-L,Lx = @time p3(C3,A3,b,LABASE)
+	#PHASE 2 -------------------------------------------------
+	#A,equ_cont,b,C,M = formalise(A,C,MM,eq,b)
+	res2=phase2(C,A,b,x0,solverSelected,eq)
+	LABASE=enBase(res2)
+	println("LaBase = ",LABASE)
 
-println("Bases : ",L)
-println("Sol associées : ",Lx)
+	#PHASE 3 -------------------------------------------------
+	println("-P3-")
+	Id,O = completion(eq)
+	A3 = hcat(A,Id)
+	C3 = hcat(C,O)
+	L,Lx = @time p3(C3,A3,b,LABASE)
+
+	println("Bases : ",L)
+	# println("Sol associées : ",Lx)
+else
+	println("Your problem is a mono-objectiv Linear Programm")
+end
